@@ -138,25 +138,25 @@ CREATE TABLE matches(
 ) COMMENT = 'Поединки турнира';
 
 insert into matches values
-(default, 1, 1, 2, 1, 1, 1, 1, default, default),
-(default, 1, 3, 4, 1, 4, 3, 0, default, default),
-(default, 1, 5, 6, 1, 5, 6, 0, default, default),
+(default, 1, 1, 2, 11, 1, 1, 1, default, default),
+(default, 1, 3, 4, 11, 4, 3, 0, default, default),
+(default, 1, 5, 6, 11, 5, 6, 0, default, default),
 /**/
-(default, 2, 7, 8, 1, 7, 1, 0, default, default),
-(default, 2, 9, 10, 1, 10, 3, 0, default, default),
-(default, 2, 6, 2, 1, 2, 6, 0, default, default),
+(default, 2, 7, 8, 11, 7, 1, 0, default, default),
+(default, 2, 9, 10, 11, 10, 3, 0, default, default),
+(default, 2, 6, 2, 11, 2, 6, 0, default, default),
 /**/
-(default, 3, 1, 5, 1, 1, 1, 1, default, default),
-(default, 3, 6, 10, 1, 6, 3, 0, default, default),
-(default, 3, 8, 3, 1, null, 7, 0, default, default),
+(default, 3, 1, 5, 11, 1, 1, 1, default, default),
+(default, 3, 6, 10, 11, 6, 3, 0, default, default),
+(default, 3, 8, 3, 11, null, 7, 0, default, default),
 /**/
-(default, 4, 2, 3, 1, null, 8, 0, default, default),
-(default, 4, 5, 10, 1, null, 8, 0, default, default),
-(default, 4, 8, 4, 1, null, 8, 0, default, default),
+(default, 4, 2, 3, 11, null, 8, 0, default, default),
+(default, 4, 5, 10, 11, null, 8, 0, default, default),
+(default, 4, 8, 4, 11, null, 8, 0, default, default),
 /**/
-(default, 5, 1, 3, 1, null, 8, 1, default, default),
-(default, 5, 4, 9, 1, null, 8, 0, default, default),
-(default, 5, 5, 2, 1, null, 8, 0, default, default);
+(default, 5, 1, 3, 11, null, 8, 1, default, default),
+(default, 5, 4, 9, 11, null, 8, 0, default, default),
+(default, 5, 5, 2, 11, null, 8, 0, default, default);
 
 drop table champions;
 CREATE TABLE champions(
@@ -207,5 +207,50 @@ insert into tournaments_media values
 (default, 3, 4, default, default),
 (default, 3, 7, default, default);
 
+
+drop view v_fighters;
+create view v_fighters as 
+select u.login as Nickname,
+	   u.first_name,
+	   u.last_name,
+	   Now() - u.birthday_at as age,
+	   case  
+	   	when f.gender = 'М' then 'Мужской'
+	   	when f.gender = 'Ж' then 'Женский'
+	   end as gender,
+	   d.name as division,
+	   f.weight,
+	   f.height,
+	   f.arm_span,
+	   f.win,
+	   f.defeat,
+	   f.draw 
+from users u
+     JOIN fighters f on f.user_id = u.id
+     join divisions d on d.id = f.division_id;
+
+drop view v_matches;
+create view v_matches as
+select m.id,
+	   t.name as tournament_name,
+	   t.place as tournament_place,
+	   m.challenger_1,
+	   (select concat(f1.first_name, ' ', f1.last_name) from users f1 where f1.id = m.challenger_1) as chalenger_1_name,
+	   m.challenger_2,
+	   (select concat(f2.first_name, ' ', f2.last_name) from users f2 where f2.id = m.challenger_2) as chalenger_2_name,
+	   m.referee as referee_id,
+	   concat(u.first_name, ' ', u.last_name)  as referee,
+	   m.winner,
+	   (select concat(w.first_name, ' ', w.last_name) from users w where w.id = m.winner ) as winner_name,
+	   m.status as fight_result_id, 
+	   s.name as fight_result,
+	   case 
+	   	when m.title_fight = 1 then 'Титульный бой'
+	   else 'Рейтинговый бой' end as type_fight  
+from
+	matches m
+join tournaments t on t.id = m.tournament
+join fight_statuses s on s.id = m.status
+join users u on u.id = m.referee;
 
 
